@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Generation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>PDF Generation Test</h1>
+    
+    <button id="testButton">Test PDF Generation</button>
+    
+    <div id="status" style="display: none;"></div>
+    
+    <h3>Request Payload:</h3>
+    <pre id="requestPayload"></pre>
+    
+    <h3>Response:</h3>
+    <pre id="responseData"></pre>
+    
+    <script>
+        // API endpoint
+        const API_ENDPOINT = 'https://b85zjxoud2.execute-api.ap-south-1.amazonaws.com/dev/generate-pdf';
+        
+        // Test payload
+        const testPayload = {
+            name: "Test User",
+            position: "Software Developer",
+            applicationId: "12345"
+        };
+        
+        // Display the request payload
+        document.getElementById('requestPayload').textContent = JSON.stringify(testPayload, null, 2);
+        
+        // Add click handler
+        document.getElementById('testButton').addEventListener('click', async function() {
+            const statusDiv = document.getElementById('status');
+            const responseDiv = document.getElementById('responseData');
+            
+            statusDiv.className = '';
+            statusDiv.textContent = 'Sending request...';
+            statusDiv.style.display = 'block';
+            
+            try {
+                // Make the API call
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testPayload)
+                });
+                
+                // Get the response data
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                    responseDiv.textContent = JSON.stringify(responseData, null, 2);
+                } catch (e) {
+                    responseDiv.textContent = responseText;
+                }
+                
+                // Display status
+                if (response.ok) {
+                    statusDiv.className = 'success';
+                    statusDiv.textContent = 'Success! Status: ' + response.status;
+                    
+                    // If we have PDF data, create download link
+                    if (responseData && responseData.pdf) {
+                        const pdfData = atob(responseData.pdf);
+                        const bytes = new Uint8Array(pdfData.length);
+                        for (let i = 0; i < pdfData.length; i++) {
+                            bytes[i] = pdfData.charCodeAt(i);
+                        }
+                        
+                        const blob = new Blob([bytes.buffer], { type: 'application/pdf' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = url;
+                        downloadLink.download = responseData.filename || 'test-pdf.pdf';
+                        downloadLink.textContent = 'Download PDF';
+                        downloadLink.style.display = 'block';
+                        downloadLink.style.marginTop = '10px';
+                        
+                        statusDiv.appendChild(document.createElement('br'));
+                        statusDiv.appendChild(downloadLink);
+                    }
+                } else {
+                    statusDiv.className = 'error';
+                    statusDiv.textContent = 'Error! Status: ' + response.status;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.className = 'error';
+                statusDiv.textContent = 'Error: ' + error.message;
+                responseDiv.textContent = error.toString();
+            }
+        });
+    </script>
+</body>
+</html>

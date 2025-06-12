@@ -1,0 +1,35 @@
+service: serverless-pdf-generator
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    SNS_TOPIC_ARN: !Ref ApplicationNotificationTopic
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource: !Ref ApplicationNotificationTopic
+
+functions:
+  formHandler:
+    handler: index.handler
+    events:
+      - http:
+          path: /process-form
+          method: post
+          cors: true
+      - http:
+          path: /generate-pdf
+          method: post
+          cors: true
+    timeout: 30
+
+resources:
+  Resources:
+    ApplicationNotificationTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: JobApplicationNotifications

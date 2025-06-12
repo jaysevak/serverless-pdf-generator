@@ -1,0 +1,14 @@
+{
+  "name": "serverless-pdf-generator",
+  "version": "1.0.0",
+  "description": "Serverless functions for form processing and PDF generation",
+  "type": "module",
+  "main": "index-esm.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.350.0",
+    "pdfkit": "^0.13.0"
+  }
+}
